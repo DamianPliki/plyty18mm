@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wyszukiwarka Płyt Laminowanych 18mm</title>
+  <style>
+    :root {
+      --bg-color: #f4f6f8;
+      --card-bg: #ffffff;
+      --text-color: #2c3e50;
+      --accent-color: #2563eb;
+      --border-color: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: 20px;
+      line-height: 1.5;
+    }
+
+    header {
+      max-width: 1200px;
+      margin: 0 auto 20px auto;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      color: #1e293b;
+    }
+
+    p.subtitle {
+      color: #64748b;
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+
+    .search-container {
+      position: sticky;
+      top: 15px;
+      z-index: 100;
+      max-width: 600px;
+      margin: 0 auto 10px auto;
+      background: var(--card-bg);
+      padding: 10px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .search-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 40px 12px 16px;
+      font-size: 1rem;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent-color);
+    }
+
+    .clear-btn {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      color: #94a3b8;
+      cursor: pointer;
+      display: none;
+    }
+
+    .clear-btn:hover {
+      color: #334155;
+    }
+
+    .tags {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .tag {
+      background: #e2e8f0;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: #334155;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .tag:hover {
+      background: var(--accent-color);
+      color: #fff;
+    }
+
+    .counter {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #64748b;
+      margin: 15px 0 25px 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .img-wrapper {
+      width: 100%;
+      height: 180px;
+      background-color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .img-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover .img-wrapper img {
+      transform: scale(1.05);
+    }
+
+    .card-content {
+      padding: 12px 15px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #0f172a;
+      line-height: 1.35;
+    }
+
+    .no-results {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 50px 20px;
+      color: #64748b;
+      font-size: 1.1rem;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(15, 23, 42, 0.85);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #ffffff;
+      border-radius: 12px;
+      max-width: 900px;
+      width: 100%;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-body {
+      flex-grow: 1;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+      padding: 10px;
+    }
+
+    .modal-body img {
+      max-width: 100%;
+      max-height: 70vh;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+
+    .modal-footer {
+      padding: 15px 20px;
+      background: #ffffff;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 2rem;
+      color: #64748b;
+      cursor: pointer;
+      line-height: 1;
+      z-index: 1010;
+      background: none;
+      border: none;
+    }
+
+    .close-btn:hover {
+      color: #0f172a;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Wyszukiwarka Płyt Laminowanych 18mm</h1>
+    <p class="subtitle">Wpisz kod, nazwę drewna, kolor lub producenta</p>
+    
+    <div class="search-container">
+      <div class="search-wrapper">
+        <input type="text" id="searchInput" placeholder="Szukaj np. Y623, Dąb, Woodeco, Kaszmir..." autofocus>
+        <button class="clear-btn" id="clearInput" title="Wyczyszczenie pola">&times;</button>
+      </div>
+      <div class="tags">
+        <button class="tag" data-filter="Kronospan">Kronospan</button>
+        <button class="tag" data-filter="SwissKrono">SwissKrono</button>
+        <button class="tag" data-filter="Woodeco">Woodeco</button>
+        <button class="tag" data-filter="Dąb">Dąb</button>
+        <button class="tag" data-filter="Kaszmir">Kaszmir</button>
+        <button class="tag" data-filter="Beton">Beton</button>
+      </div>
+    </div>
+    <div class="counter" id="counter">Ładowanie bazy...</div>
+  </header>
+
+  <main class="grid" id="boardsGrid"></main>
+
+  <div class="modal" id="imageModal">
+    <div class="modal-content">
+      <button class="close-btn" id="closeModal">&times;</button>
+      <div class="modal-body">
+        <img id="modalImg" src="" alt="">
+      </div>
+      <div class="modal-footer">
+        <div class="modal-title" id="modalTitle"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const boards = [
+      // KRONOSPAN
+      { name: "Płyta meblowa Kronospan laminowana Falco Focus Dąb Jasny Monaco Y623", folder: "Kronospan", file: "Y623.png" },
+      { name: "Płyta meblowa Kronospan laminowana Falco Focus Dąb Hiszpański Y583", folder: "Kronospan", file: "Y623.png" },
+      { name: "Płyta meblowa Kronospan laminowana Falco Focus Jesion Othello Brązowy Y689", folder: "Kronospan", file: "Y623.png" },
+      { name: "Płyta meblowa Kronospan laminowana Falco Focus Jesion Othello Naturalny Y688", folder: "Kronospan", file: "Y688.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Falco Focus Dąb Tristan Y687", folder: "Kronospan", file: "Y687.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Falco Focus Dąb Dylan Ciemny Y686", folder: "Kronospan", file: "Y686.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Falco Focus Dąb Dylan Jasny Y685", folder: "Kronospan", file: "Y685.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Falco Focus Dąb Palas Y684", folder: "Kronospan", file: "Y684_Palas Oak.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Falco Focus Grey Element Y381", folder: "Kronospan", file: "Y381_Grey Element.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Falco Focus Light Element Y380", folder: "Kronospan", file: "Y380_Light Element.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Primavera Słomkowy K695 PV", folder: "Kronospan", file: "K695 Straw Primavera Oak.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Cajun K683 PD", folder: "Kronospan", file: "K683 Cajun.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Biel Alpejska 8685 PD", folder: "Kronospan", file: "8685 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Cremona Cannolo 2739 PW", folder: "Kronospan", file: "K2739 Cannolo Cremona Oak.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Cremona Torro 2738 PW", folder: "Kronospan", file: "K2738 Torro Cremona Oak.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Cremona Terracotta 2737 PW", folder: "Kronospan", file: "K2737 Cotta Cremona Oak.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Granada Brązowa K693 PN", folder: "Kronospan", file: "K693-Bronze-Granada.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Granada Niebiańska K692 PN", folder: "Kronospan", file: "K692-Cloud-Granada.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Granada Migdałowa K691 PN", folder: "Kronospan", file: "K691-Almond-Granada.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Lamel Canella K689 PW", folder: "Kronospan", file: "K689 Natural Canella Strata.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Canella Naturalny K688 PW", folder: "Kronospan", file: "K688 Natural Canella Oak.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Primavera Kakaowy K697 PV", folder: "Kronospan", file: "K697 Cocoa Primavera Oak.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Primavera Umbra K696 PV", folder: "Kronospan", file: "K696-Umber-Primavera-Oak_2070x2800mm (1).webp" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Primavera Jedwabny K694 PV", folder: "Kronospan", file: "K694 Silk Primavera Oak.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Kaszmir 5981 PD", folder: "Kronospan", file: "5981 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Antracyt 0164 PD", folder: "Kronospan", file: "0164 PE_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Czarny 0190 PD", folder: "Kronospan", file: "0190 PE_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Ciemny Las K687 PD", folder: "Kronospan", file: "K687 Dark Forest.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Pudrowy Róż K686 PD", folder: "Kronospan", file: "K686 Powder Pink.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Stalowy Grafit K685 PD", folder: "Kronospan", file: "K685 Steel Blue.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Czarna Trufla K684 PD", folder: "Kronospan", file: "K684 Black Truffle.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Alpaca K682 PD", folder: "Kronospan", file: "K682 Alpaca.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Macadamia K681 PD", folder: "Kronospan", file: "K681 Macadamia.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Kamienny Beż K680 PD", folder: "Kronospan", file: "K680.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Biel Alpejska 8685 BS", folder: "Kronospan", file: "8685 BS_v2 (1).jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Frassino Hielo 6679 SW", folder: "Kronospan", file: "6679Frassino-Hielo-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Pegaso Elegante 4994 GD", folder: "Kronospan", file: "4994Pegaso-Elegante-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Pegaso Cordiale 4992 GD", folder: "Kronospan", file: "4992Pegaso-Cordiale-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Pegaso Autentico 4991 GD", folder: "Kronospan", file: "4991Pegaso-Autentico-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Carbon Bianco 2452 DE", folder: "Kronospan", file: "2452Carbon-Bianco-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Carbon Fumo 2451 DE", folder: "Kronospan", file: "2541Carbon-Fumo-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Olmo Jerez Scuro 6782 SG", folder: "Kronospan", file: "6782Olmo-Jerez-Scuro-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Rovere Moresco 6779 DV", folder: "Kronospan", file: "6779Rovere-Moresco-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Olmo Bianco Jerez 6739 DV", folder: "Kronospan", file: "6739Olmo-Jerez-Bianco-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Rovere Rock Bianco 6713 SG", folder: "Kronospan", file: "6713Rovere-Rock-Bianco-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Olmo Jerez 6579 SG", folder: "Kronospan", file: "6579Olmo-Jerez-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Grigio Tessuto 6574 SX", folder: "Kronospan", file: "6574_SX_GRIGIO_TESSUTO.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Twist Tessuto 6572 SX", folder: "Kronospan", file: "6572Twist-Tessuto-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Rovere Bruges 6562 SG", folder: "Kronospan", file: "6562Rovere-Bruges-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Noce Athens 6424 SG", folder: "Kronospan", file: "6424Noce-Athens-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Bronzo 5456 CB", folder: "Kronospan", file: "5456Bronzo-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Perla 5451 CB", folder: "Kronospan", file: "5451Perla-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Caracalla Naturale 5430 DV", folder: "Kronospan", file: "5430Caracalla-Naturale-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Caracalla Deciso 5429 DV", folder: "Kronospan", file: "5429Caracalla-Deciso-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Caracalla Ardesia 5428 DV", folder: "Kronospan", file: "5428Caracalla-Ardesia-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Altea 4983 SX", folder: "Kronospan", file: "4983Altea-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Arduo 4980 SX", folder: "Kronospan", file: "4980Arduo-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Argilla 4758 CB", folder: "Kronospan", file: "4758Argilla-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Grisaglia 4756 SX", folder: "Kronospan", file: "4756Grisaglia-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Partenone Naturale 2531 DV", folder: "Kronospan", file: "2531Partenone-Nordico-download-2.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Rafia Naturale 2529 SN", folder: "Kronospan", file: "Rafia-Naturale-2529.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Iridio 2481 AR", folder: "Kronospan", file: "2481Iridio-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Palladio 2480 AR", folder: "Kronospan", file: "2480Palladio-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Inca 2479 AR", folder: "Kronospan", file: "2479Inca-download.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Abaco Incanto 2454 DV", folder: "Kronospan", file: "Abaco-Incanto-2454.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Barokowy Ristretto K537 RW", folder: "Kronospan", file: "K537.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Jesion Kala Dymiony K548 RW", folder: "Kronospan", file: "K548.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Kasztan Arvadonna Ciemny K534 AD", folder: "Kronospan", file: "K534.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Kasztan Arvadonna Mink K533 AD", folder: "Kronospan", file: "K533.webp" },
+      { name: "Płyta meblowa Kronospan laminowana Kasztan Arvadonna K532 AD", folder: "Kronospan", file: "K532.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Kasztan Arvadonna Kamienny K531 AD", folder: "Kronospan", file: "K531.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Hudson Czekoladowy K554 HU", folder: "Kronospan", file: "K554.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Hudson Amaretto K530 HU", folder: "Kronospan", file: "K530.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Hudson Złoty K529 HU", folder: "Kronospan", file: "K529.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Hudson Kaszmirowy K528 HU", folder: "Kronospan", file: "K528.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Hudson Biszkoptowy K527 HU", folder: "Kronospan", file: "K527.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Orzech Franklin Tobacco K547 RW", folder: "Kronospan", file: "K547.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Orzech Franklin Karmelowy K546 RW", folder: "Kronospan", file: "K546.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Silverjack Postarzany K545 RW", folder: "Kronospan", file: "K545.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Silverjack Orzechowy K544 RW", folder: "Kronospan", file: "K544.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Barbera Piaskowy K543 SN", folder: "Kronospan", file: "K543.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Juta Ciemna K542 PN", folder: "Kronospan", file: "K542.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Juta Jasna K541 PN", folder: "Kronospan", file: "K541.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Albus Szary K540 PN", folder: "Kronospan", file: "K540.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Łupek Arosa Ciemny K539 PN", folder: "Kronospan", file: "K539.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Łupek Arosa Jasny K538 PN", folder: "Kronospan", file: "K538.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Barokowy Bursztynowy K536 RW", folder: "Kronospan", file: "K536.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Barokowy Złoty K535 RW", folder: "Kronospan", file: "K535.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Jesion Surfside K524 SN", folder: "Kronospan", file: "K524.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Jesion Surfside Stalowy K526 SN", folder: "Kronospan", file: "K526.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Jesion Surf Side Jasny K525 SN", folder: "Kronospan", file: "K525.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dymiona Zieleń K521 SU", folder: "Kronospan", file: "K521.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Ciemny Szmaragd K520 SU", folder: "Kronospan", file: "K520.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Mouse Gray K519 SU", folder: "Kronospan", file: "K519.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Surf Blue K518 SU", folder: "Kronospan", file: "K518.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Lazurowy Błękit K517 SU", folder: "Kronospan", file: "K517.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Toffee K516 SU", folder: "Kronospan", file: "K516.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Pikantna Czerwień K515 SU", folder: "Kronospan", file: "K515.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Głębia Sahary K514 SU", folder: "Kronospan", file: "K514.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Marshmallow K513 SU", folder: "Kronospan", file: "K513.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Róż Naturalny K512 SU", folder: "Kronospan", file: "K512.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Ciemna Czekolada 7181 BS", folder: "Kronospan", file: "7181.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Alby Blue 5994 SU", folder: "Kronospan", file: "5994.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Platinium Disk K523 PE", folder: "Kronospan", file: "K523.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Aluminium Flash K522 PE", folder: "Kronospan", file: "K522.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Bazalt 0166 BS", folder: "Kronospan", file: "0166.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Fineline Mocca 8548 SN", folder: "Kronospan", file: "8548 SN_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Arusha Wenge 7648 SN", folder: "Kronospan", file: "7648 SN_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Ciemny Atelier 4299 SU", folder: "Kronospan", file: "4299 SU_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Clubhouse Szary K079 PW", folder: "Kronospan", file: "K079 PW_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Drewno Nordyckie Szare K089 PW", folder: "Kronospan", file: "K089 PW_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Ciemny Artwood K084 SN", folder: "Kronospan", file: "K084 SN_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Jasny Atelier 4298 SU", folder: "Kronospan", file: "4298 SU_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Orzech Rockford Ciemny K087 PW", folder: "Kronospan", file: "K087 PW_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Burbon K082 PW", folder: "Kronospan", file: "K082 PW_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Orzech Rockford Naturalny K086 PW", folder: "Kronospan", file: "K086 PW_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Kamienny 5527 SN", folder: "Kronospan", file: "5527 SN_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Blackwood Jęczmienny K021 SN", folder: "Kronospan", file: "K021 SN_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Sławonia 5501 SN", folder: "Kronospan", file: "5501 SN_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Surowy K105 PW", folder: "Kronospan", file: "K105 PW_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Beton Jasny K349 RT", folder: "Kronospan", file: "K349_Silk Flow_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Beton K350 RT", folder: "Kronospan", file: "K350_Concrete Flow_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Grange Platynowy K355 PW", folder: "Kronospan", file: "K355_Platinum Grange Oak_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Castello Ristretto K357 PW", folder: "Kronospan", file: "K357_Greige Castello Oak_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Harbor Vintage K360 PW", folder: "Kronospan", file: "K360_Vintage Harbor Oak_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Castello Miodowy K358 PW", folder: "Kronospan", file: "K358_Honey Castello Oak_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Evoke Przybrzeżny K365 PW", folder: "Kronospan", file: "K365_Coast Evoke Oak_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Harbor Złoty K361 PW", folder: "Kronospan", file: "K361_Gold Harbor Oak_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Grange Piaskowy K356 PW", folder: "Kronospan", file: "K356_Sand Grange Oak_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Grange Kolonialny K354 PW", folder: "Kronospan", file: "K354_Colonial Grange Oak_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Castello Koniakowy K359 PW", folder: "Kronospan", file: "K359_Cognac Castello Oak_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Beton Rdzawy K351 RT", folder: "Kronospan", file: "K351_Rusty Flow_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Evoke Kamienny K366 PW", folder: "Kronospan", file: "K366_Fossil Evoke Oak_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Beton Ciemny K352 RT", folder: "Kronospan", file: "K352_Iron Flow_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Beton Czarny K353 RT", folder: "Kronospan", file: "K353_Charcoal Flow_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Drewno Nordyckie Białe K088 PW", folder: "Kronospan", file: "K088 PW_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Jasny Artwood K083 SN", folder: "Kronospan", file: "K083 SN_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Sosna Loft Biała K010 SN", folder: "Kronospan", file: "K010 SN_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Coastland Biały K080 PW", folder: "Kronospan", file: "K080 PW_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Orzech Rockford Jasny K085 PW", folder: "Kronospan", file: "K085 PW_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Elegance K107 PW", folder: "Kronospan", file: "K107 PW_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Skalny Oregon 5529 SN", folder: "Kronospan", file: "5529 SN_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Blackwood Satynowy K022 SN", folder: "Kronospan", file: "K022 SN_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Coastland Szampański K081 PW", folder: "Kronospan", file: "K081 PW_web.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Craft Biały K001 PW", folder: "Kronospan", file: "K001 PW_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Wiąz Liberty Srebrny K019 PW", folder: "Kronospan", file: "K019 PW_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Wiąz Liberty Jasny K017 PW", folder: "Kronospan", file: "K017 PW_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Craft Szary K002 PW", folder: "Kronospan", file: "K002 PW_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Urban Oyster K005 PW", folder: "Kronospan", file: "K005 PW_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Wiąz Liberty Dymiony K018 PW", folder: "Kronospan", file: "K018 PW_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Truflowy Trufel 5194 SN", folder: "Kronospan", file: "5194 SN_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Urban Kawowy K007 PW", folder: "Kronospan", file: "K007 PW_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Buk Artisan Perłowy K012 SU", folder: "Kronospan", file: "K012 SU_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Ferrara 8921 BS", folder: "Kronospan", file: "8921 PR_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Brzoza 1715 BS", folder: "Kronospan", file: "1715 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Klon 0375 BS", folder: "Kronospan", file: "0375 PR_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Coco Bolo 8995 SN", folder: "Kronospan", file: "8995 SN_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Buk Artisan Piaskowy K013 SU", folder: "Kronospan", file: "K013 SU_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Piaskowany K076 PW", folder: "Kronospan", file: "K076 PW_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Vintage Jasny Sonoma 3025 SN", folder: "Kronospan", file: "3025 SN_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Urban Bursztynowy K006 PW", folder: "Kronospan", file: "K006 PW_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Wiąz Szlachetny 5500 SU", folder: "Kronospan", file: "5500 SU_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Nagano 8431 SN", folder: "Kronospan", file: "8431 SN_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Craft Złoty K003 PW", folder: "Kronospan", file: "K003 PW_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Buk Klasyczny 0381 BS", folder: "Kronospan", file: "0381 PR_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Olcha 1912 BS", folder: "Kronospan", file: "1912 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Wiśnia 0344 BS", folder: "Kronospan", file: "0344 PR_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Orzech Alpejski 9614 BS", folder: "Kronospan", file: "9614 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Wiśnia Riverside Ciemna K078 PW", folder: "Kronospan", file: "K078 PW_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Orzech Select Jasny K008 PW", folder: "Kronospan", file: "K008 PW_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Orzech Select Ciemny K009 PW", folder: "Kronospan", file: "K009 PW_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Craft Tobacco K004 PW", folder: "Kronospan", file: "K004 PW.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Vintage Marine Wood K015 PW", folder: "Kronospan", file: "K015 PW_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Orzech Select Ciepły K020 PW", folder: "Kronospan", file: "K020 PW_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Orzech 0729 BS", folder: "Kronospan", file: "0729 PR_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Brązowy K090 PW", folder: "Kronospan", file: "K090 PW_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Orzech Tiepolo 8953 SU", folder: "Kronospan", file: "8953 SU_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Wenge 0854 BS", folder: "Kronospan", file: "0854 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Wenge Luiziana 9763 BS", folder: "Kronospan", file: "9763 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Carbon Marine Wood K016 PW", folder: "Kronospan", file: "K016 PW_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Artisan 5307 LN", folder: "Kronospan", file: "Artisan_50x60_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Dąb Wotan 5402 PS", folder: "Kronospan", file: "5402_Wotan_Eiche_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Biały Platynowy 6459 SM", folder: "Kronospan", file: "6459_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Biały Brylantowy 8681 SM", folder: "Kronospan", file: "8681 SU_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Biel Alpejska 8685 SM", folder: "Kronospan", file: "8685 BS_v2 (2).jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Perłowy Biały 8100 SM", folder: "Kronospan", file: "8100 SM_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Biały Korpusowy 0110 SM", folder: "Kronospan", file: "0110 SM_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Biały Frontowy 0101 PE", folder: "Kronospan", file: "0101 PE_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Szary 0191 SU", folder: "Kronospan", file: "0191 SU_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Manhattan Szary 0540 PE", folder: "Kronospan", file: "0540 PE_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Stalowo Szary 1700 PE", folder: "Kronospan", file: "1700 PE_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Szary Chinchilla 0197 SU", folder: "Kronospan", file: "0197 SU_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Jasny Grafit 0171 PE", folder: "Kronospan", file: "0171 PE_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Kobalt Szary 6299 BS", folder: "Kronospan", file: "6299 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Grafit Szary 0162 PE", folder: "Kronospan", file: "0162 PE_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Antracyt 0164 PE", folder: "Kronospan", file: "0164 PE_v2 (1).jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Czarny 0190 PE", folder: "Kronospan", file: "0190 PE_v2 (1).jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Migdałowy 0564 PE", folder: "Kronospan", file: "0564 PE_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Krem 7031 BS", folder: "Kronospan", file: "7031 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Kość Słoniowa 0514 PE", folder: "Kronospan", file: "0514 PE_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Muszla 5982 BS", folder: "Kronospan", file: "5982 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Beżowy 0522 PE", folder: "Kronospan", file: "0522 PE_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Piaskowy 0515 PE", folder: "Kronospan", file: "0515 PE_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Szampański 7045 SU", folder: "Kronospan", file: "7045 SU_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Kaszmir 5981 BS", folder: "Kronospan", file: "5981 BS_v2 (1).jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Macchiato 8533 BS", folder: "Kronospan", file: "8533 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Cappuccino 0301 SU", folder: "Kronospan", file: "0301 SU_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Glina Szara K096 SU", folder: "Kronospan", file: "K096 SU_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Latte 7166 BS", folder: "Kronospan", file: "7166 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Żółty 0134 BS", folder: "Kronospan", file: "0134 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Pomarańczowy 0132 BS", folder: "Kronospan", file: "0132 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Czerwień Chilli 7113 BS", folder: "Kronospan", file: "7113 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Ceramiczny K098 SU", folder: "Kronospan", file: "K098 SU_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Czerwony Oxid 9551 BS", folder: "Kronospan", file: "9551 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Pastelowy Zielony 7063 SU", folder: "Kronospan", file: "7063 SU_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Błękitny Zmierzch K097 SU", folder: "Kronospan", file: "K097 SU_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Zieleń Mamba 7190 BS", folder: "Kronospan", file: "7190 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Zielony Oxid 9561 BS", folder: "Kronospan", file: "9561 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Petrol 0244 SU", folder: "Kronospan", file: "0244 SU_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Niebieski 0125 BS", folder: "Kronospan", file: "0125 BS_v2.jpg" },
+      { name: "Płyta meblowa Kronospan laminowana Granatowy 8984 BS", folder: "Kronospan", file: "8984 BS_v2.jpg" },
+
+      // SWISS KRONO
+      { name: "SwissKrono 18 PŁYTA N ADORATION 20310 CX", folder: "SwissKrono", file: "18-plyta-n-adoration-20310-cx-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA N WIĄZ EMBRACE 20280 CX", folder: "SwissKrono", file: "18-plyta-n-embrace-20280-cx-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA N WIĄZ EDEN 20270 CX", folder: "SwissKrono", file: "18-plyta-n-eden-20270-cx-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA N DĄB OCEAN 20260 CX", folder: "SwissKrono", file: "18-plyta-n-ocean-20260-cx-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA N DĄB ORIGIN 20250 CX", folder: "SwissKrono", file: "18-plyta-n-origin-20250-cx-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA N ORZECH KAMERALNY 20764", folder: "SwissKrono", file: "20764-vl.jpg" },
+      { name: "SwissKrono 18 PŁYTA N DĄB NASTROJOWY 20754 OV", folder: "SwissKrono", file: "18-plyta-n-dab-nastrojowy-20754-ov-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA N DĄB ZIMOWY 20734 OV", folder: "SwissKrono", file: "18-plyta-n-dab-zimowy-20734-ov-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA N DĄB WIOSENNY 20744 OV", folder: "SwissKrono", file: "18-plyta-n-dab-wiosenny-20744-ov-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA N WIŚNIA CHERRY GOLD 20571 OV", folder: "SwissKrono", file: "20571-ov.jpg" },
+      { name: "SwissKrono 18 PŁYTA N DĄB LETNI ZŁOTY 20551 OV", folder: "SwissKrono", file: "18-plyta-n-dab-letni-zloty-20551-ov-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA N DĄB FORNIR 60654 OV", folder: "SwissKrono", file: "18-plyta-n-dab-fornir-60654-ov-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA N OLCHA ALLEGORY 20320 CX", folder: "SwissKrono", file: "18-plyta-n-allegory-20320-cx-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA N OLCHA AMITY 20300 CX", folder: "SwissKrono", file: "18-plyta-n-amity-20300-cx-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA N WIĄZ EMOTION 20290 CX", folder: "SwissKrono", file: "18-plyta-n-emotion-20290-cx-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA N DĄB OASIS 20240 CX", folder: "SwissKrono", file: "18-plyta-n-oasis-20240-cx-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA TYTAN SREBRNY 4452 VL", folder: "SwissKrono", file: "4452-VL.jpg" },
+      { name: "SwissKrono 18 PŁYTA MARMUR CREMA 4448 VL", folder: "SwissKrono", file: "4448-VL.jpg" },
+      { name: "SwissKrono 18 PŁYTA PŁÓTNO OXFORD 4096 TO", folder: "SwissKrono", file: "4096-TO.jpg" },
+      { name: "SwissKrono 18 PŁYTA SOSNA CZEKOLADOWA 4095", folder: "SwissKrono", file: "4095.jpg" },
+      { name: "SwissKrono 18 PŁYTA KWARCYT SZARY 30220 TO", folder: "SwissKrono", file: "30220-TO.jpg" },
+      { name: "SwissKrono 18 PŁYTA ORZECH ART DECO 30190 VL", folder: "SwissKrono", file: "30190-VL.jpg" },
+      { name: "SwissKrono 18 PŁYTA KASKADA CZARNA 30180 TO", folder: "SwissKrono", file: "30180-TO.jpg" },
+      { name: "SwissKrono 18 PŁYTA KASKADA BEŻOWA 30170 TO", folder: "SwissKrono", file: "plyta-laminowana-30170-to-kaskada-bezowa.jpg" },
+      { name: "SwissKrono 18 PŁYTA WYDMY BEŻOWE 30160 TO", folder: "SwissKrono", file: "plyta-laminowana-d722-se-orzech-jasny-35.jpg" },
+      { name: "SwissKrono 18 PŁYTA LEN KREMOWY 30100 TO", folder: "SwissKrono", file: "30100.jpg" },
+      { name: "SwissKrono 18 PŁYTA BETON SZARY 30090 TO", folder: "SwissKrono", file: "30090.jpg" },
+      { name: "SwissKrono 18 PŁYTA FILC SZARY 30080 TO", folder: "SwissKrono", file: "30080.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA KASZMIROWY 6933 VL", folder: "SwissKrono", file: "6933.jpg" },
+      { name: "SwissKrono 18 PŁYTA TRAWA CYTRYNOWA 6931 VL", folder: "SwissKrono", file: "6931.jpg" },
+      { name: "SwissKrono 18 PŁYTA GRANATOWY 4810 VL", folder: "SwissKrono", file: "4810.jpg" },
+      { name: "SwissKrono 18 PŁYTA MORSKI 4809 VL", folder: "SwissKrono", file: "4809-VL.jpg" },
+      { name: "SwissKrono 18 PŁYTA PUDROWY RÓŻ 4446 VL", folder: "SwissKrono", file: "4446.jpg" },
+      { name: "SwissKrono 18 PŁYTA ATRAMENTOWY 10040 VL", folder: "SwissKrono", file: "10040.jpg" },
+      { name: "SwissKrono 18 PŁYTA ALOESOWY 10030 VL", folder: "SwissKrono", file: "10030.jpg" },
+      { name: "SwissKrono 18 PŁYTA CEGLANA CZERWIEŃ 10020 VL", folder: "SwissKrono", file: "10020.jpg" },
+      { name: "SwissKrono 18 PŁYTA SEZAMOWY 10010 VL", folder: "SwissKrono", file: "10010.jpg" },
+      { name: "SwissKrono 18 PŁYTA TKANE KWIATY 70070 TO", folder: "SwissKrono", file: "70070.jpg" },
+      { name: "SwissKrono 18 PŁYTA TERRAZZO FRESCO 70060 TO", folder: "SwissKrono", file: "70060.jpg" },
+      { name: "SwissKrono 18 PŁYTA DĄB DELIKATNY 70050 OV", folder: "SwissKrono", file: "70050.jpg" },
+      { name: "SwissKrono 18 PŁYTA ORZECH AMBASADOR 4822 OV", folder: "SwissKrono", file: "4822.jpg" },
+      { name: "SwissKrono 18 PŁYTA TYTAN BRĄZOWOSZARY 4454 VL", folder: "SwissKrono", file: "4454.jpg" },
+      { name: "SwissKrono 18 PŁYTA KASZTAN SPOKOJNY 20130 OV", folder: "SwissKrono", file: "20130.jpg" },
+      { name: "SwissKrono 18 PŁYTA DĄB LETNI 20230 OV", folder: "SwissKrono", file: "20230.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMELE BRĄZOWE 20210 MX", folder: "SwissKrono", file: "20210.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMELE KREMOWE 20200 MX", folder: "SwissKrono", file: "20200.jpg" },
+      { name: "SwissKrono 18 PŁYTA ORZECH KLASYCZNY 20150 OW", folder: "SwissKrono", file: "20150.jpg" },
+      { name: "SwissKrono 18 PŁYTA DĄB LIRYCZNY 20140 OV", folder: "SwissKrono", file: "20140.jpg" },
+      { name: "SwissKrono 18 PŁYTA KASZTAN SPOKOJNY JAS 20120 OV", folder: "SwissKrono", file: "20120.jpg" },
+      { name: "SwissKrono 18 PŁYTA DĄB NOSTALGICZNY 20110 OV", folder: "SwissKrono", file: "20110.jpg" },
+      { name: "SwissKrono 18 PŁYTA DĄB FRAPPE 1096 OV", folder: "SwissKrono", file: "1096.jpg" },
+      { name: "SwissKrono 18 PŁYTA DĄB LATTE 1094 OV", folder: "SwissKrono", file: "1094.jpg" },
+      { name: "SwissKrono 18 PŁYTA DĄB MOCHA 1092 OW", folder: "SwissKrono", file: "1092.jpg" },
+      { name: "SwissKrono 18 PŁYTA DĄB LUNGO 1089 OV", folder: "SwissKrono", file: "1089.jpg" },
+      { name: "SwissKrono 18 PŁYTA $ BIEL ALPEJSKA 8685 VL", folder: "SwissKrono", file: "18-plyta-biel-alpejska-8685-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA ANTRACYT U164 PE", folder: "SwissKrono", file: "plyta-laminowana-u164-pe-antracyt.jpg" },
+      { name: "SwissKrono 18 PŁYTA SZARY CIEMNY 171 VL", folder: "SwissKrono", file: "18-plyta-n-szary-ciemny-171-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA PISTACJOWY 4439 VL", folder: "SwissKrono", file: "18-plyta-n-pistacjowy-4439-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA CEGLANY 4436 VL", folder: "SwissKrono", file: "18-plyta-n-ceglany-4436-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA NIEB PRZYDYMIONY 4435 VL", folder: "SwissKrono", file: "18-plyta-n-nieb-przydymiony-4435-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA WIĄZ NATURAL 4432 OV", folder: "SwissKrono", file: "18-plyta-n-wiaz-natural-4432-ov-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA DĄB BEŻOWY 4430 OV", folder: "SwissKrono", file: "18-plyta-n-dab-bezowy-4430-ov-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA DĄB NATURAL 4428 OV", folder: "SwissKrono", file: "18-plyta-n-dab-natural-4428-ov-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA JESION JASNY 4426 OV", folder: "SwissKrono", file: "18-plyta-n-jesion-jasny-4426-ov-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA JESION ANTRACYT * 4424 OV", folder: "SwissKrono", file: "18-plyta-n-jesion-antracyt-4424-ov-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA KASZTAN BIAŁY 4419 OV", folder: "SwissKrono", file: "18-plyta-n-kasztan-bialy-4419-ov-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA KASZTAN NATUR 4418 OV", folder: "SwissKrono", file: "18-plyta-n-kasztan-natur-4418-ov-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA NEAPOLIS JASNY * 4415 OV", folder: "SwissKrono", file: "18-plyta-n-neapolis-jasny-4415-ov-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA DREW LIP KREM 4412 OV", folder: "SwissKrono", file: "18-plyta-n-drew-lip-krem-4412-ov-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA ORZECH ZŁOTY 4410 OV", folder: "SwissKrono", file: "18-plyta-n-orzech-zloty-4410-ov-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA ORZECH BRĄZOWY 4409 OV", folder: "SwissKrono", file: "18-plyta-n-orzech-brazowy-4409-ov-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA DĄB ARTISAN 4225 OV", folder: "SwissKrono", file: "18-plyta-n-dab-artisan-4225-ov-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW DĄB BISZKOPT 4032 OW", folder: "SwissKrono", file: "18-plyta-ow-dab-biszkopt-4032-ow-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW WYTRAWNY SZARY KAMIEN 4878 VL", folder: "SwissKrono", file: "18-plyta-ow-wytr-sz-kam-4878-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW ORZECH POŁUDNIOWY 1039 OW", folder: "SwissKrono", file: "18-plyta-ow-orzech-polud-1039-ow-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW DĄB WERSAL 4865 OW", folder: "SwissKrono", file: "18-plyta-ow-dab-wersal-4865-ow-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW DĄB HAWANA 4031 CL", folder: "SwissKrono", file: "18-plyta-ow-dab-hawana-4031-cl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA DĄB SŁONECZNY 4033 OW", folder: "SwissKrono", file: "18-plyta-ow-dab-slonecz-4033-ow-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA DĄB PRADAWNY 1035 OW", folder: "SwissKrono", file: "18-plyta-ow-dab-pradaw-1035-ow-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OLCHA OW 9310 OW", folder: "SwissKrono", file: "18-plyta-olcha-ow-9310-ow-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA BETON MILLENIUM 1038 BS", folder: "SwissKrono", file: "18-plyta-ow-beton-millen-1038-bs-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW DREWNO RETO 4040 MX", folder: "SwissKrono", file: "18-plyta-ow-drewno-ret-4040-mx-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA DĄB ODWIECZNY 1041 OW", folder: "SwissKrono", file: "18-plyta-ow-dab-odwiecz-1041-ow-280x207.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D2609 MX Dab Palermo Jasny", folder: "SwissKrono", file: "plyta-laminowana-d2609-mx-dab-palermo-jasny.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D9103 OW dąb jasny", folder: "SwissKrono", file: "plyta-laminowana-d9103-ow-dab-jasny.jpg" },
+      { name: "SwissKrono 18 PŁYTA DĄB RUSTYKALNY 3055 OW", folder: "SwissKrono", file: "18-plyta-dab-rustykal-3055-ow-280x207.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D2840 OW dąb królewski", folder: "SwissKrono", file: "plyta-laminowana-d2840-ow-dab-krolewski.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA DĄB ANTYCZNY 2419 OW", folder: "SwissKrono", file: "18-plyta-dab-antycz-2419-ow-280x207.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D3025 OW dab sonoma", folder: "SwissKrono", file: "plyta-laminowana-d3025-ow-dab-sonoma.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D3158 MX jesion werona", folder: "SwissKrono", file: "plyta-laminowana-d3158-mx-jesion-werona.jpg" },
+      { name: "SwissKrono 18 PŁYTA CZARNA SD 190 SD", folder: "SwissKrono", file: "18-plyta-czarna-sd-190-sd-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA BIEL ALPEJSKA U8685 SM", folder: "SwissKrono", file: "plyta-laminowana-8685-sm-biel-alpejska.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D3273 MX dąb canyon", folder: "SwissKrono", file: "plyta-laminowana-d3273-mx-dab-canyon.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW DĄB PARYŻ 3799 CL", folder: "SwissKrono", file: "18-plyta-ow-dab-paryz-3799-cl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW CAPPUCINO 3053 VL", folder: "SwissKrono", file: "18-plyta-ow-cappucino-3053-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW BŁĘKIT LODOWY 3271 VL", folder: "SwissKrono", file: "18-plyta-ow-blekit-lod-3271-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW RÓŻOWY 141 VL", folder: "SwissKrono", file: "18-plyta-ow-rozowy-141-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW DĄB MADRYT 3801 CL", folder: "SwissKrono", file: "18-plyta-ow-dab-madryt-3801-cl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW DĄB RZYM 3800 CL", folder: "SwissKrono", file: "18-plyta-ow-dab-rzym-3800-cl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW OLIWKOWY 2508 VL", folder: "SwissKrono", file: "18-plyta-ow-oliwkowy-2508-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA BIAŁA ALASKA 8681 VL", folder: "SwissKrono", file: "18-plyta-ow-biala-alaska-8681-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW BEŻ JASNY 119 VL", folder: "SwissKrono", file: "18-plyta-ow-bez-jasny-119-vl-280x207.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA U3293 SM biały polarny", folder: "SwissKrono", file: "plyta-laminowana-u3293-sm-bialy-polarny.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW BUK BORDE 3806 OW", folder: "SwissKrono", file: "18-plyta-ow-buk-borde-3806-ow-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA DĄB LONDYN 3798 CL", folder: "SwissKrono", file: "18-plyta-ow-dab-londyn-3798-cl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW POPIEL 112 VL", folder: "SwissKrono", file: "18-plyta-ow-popiel-112-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW WIĄZ LUCERNA 4103 SW", folder: "SwissKrono", file: "18-plyta-ow-wiaz-lucer-4103-sw-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA ANTRACYT 164 VL", folder: "SwissKrono", file: "18-plyta-ow-antracyt-164-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW GRAFITOWY 162 VL", folder: "SwissKrono", file: "18-plyta-ow-grafitowy-162-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW KASZTAN LW 3818 OW", folder: "SwissKrono", file: "18-plyta-ow-kasztan-lw-3818-ow-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW TRUFLOWY 3189 VL", folder: "SwissKrono", file: "18-plyta-ow-truflowy-3189-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW TOFFI 3188 VL", folder: "SwissKrono", file: "18-plyta-ow-toffi-3188-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA BIAŁA PORCELANA 570 VL", folder: "SwissKrono", file: "18-plyta-ow-biala-porc-570-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW SZARY JASNY 2653 VL", folder: "SwissKrono", file: "18-plyta-ow-szary-jasny-2653-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW ORZECH BARCELONA 3813 OW", folder: "SwissKrono", file: "18-plyta-ow-orzech-barc-3813-ow-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA ORZECH WENECJA 3811 OW", folder: "SwissKrono", file: "18-plyta-ow-orzech-wen-3811-ow-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW WANILIOWY 3261 VL", folder: "SwissKrono", file: "18-plyta-ow-waniliowy-3261-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW BUK ZURYCH 3807 OW", folder: "SwissKrono", file: "18-plyta-ow-buk-zurych-3807-ow-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW BŁĘKIT GOŁĘBI 120 VL", folder: "SwissKrono", file: "18-plyta-ow-blekit-golebi-120-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA ORZECH NICE 3810 OW", folder: "SwissKrono", file: "18-plyta-ow-orzech-nice-3810-ow-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA SZARY ŁĄKOWY 544 VL", folder: "SwissKrono", file: "18-plyta-ow-szary-lakow-544-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW BŁĘKIT MORS 3824 VL", folder: "SwissKrono", file: "18-plyta-ow-blekit-mors-3824-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA DĄB NOWY JORK 3823 OW", folder: "SwissKrono", file: "18-plyta-ow-dab-nowy-jork-3823-ow-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW DĄB DUBLIN 3822 OW", folder: "SwissKrono", file: "18-plyta-ow-dab-dublin-3822-ow-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW DĄB SZTOKHOLM 3821 OW", folder: "SwissKrono", file: "18-plyta-ow-dab-sztokh-3821-ow-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW KASZTAN BERNO 3820 OW", folder: "SwissKrono", file: "18-plyta-ow-kasztan-berno-3820-ow-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA SZARY LAWA 3057 VL", folder: "SwissKrono", file: "18-plyta-ow-szary-lawa-3057-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA SZARY KAMIEN 540 VL", folder: "SwissKrono", file: "18-plyta-ow-szary-kamien-540-vl-280x207.jpg" },
+      { name: "SwissKrono 18 SF PŁYTA BIAŁA ALASKA 8681 SM", folder: "SwissKrono", file: "18-sf-plyta-biala-alaska-8681-sm-280x207.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D3167 MX dąb rijeka", folder: "SwissKrono", file: "plyta-laminowana-d3167-mx-dab-rijeka.jpg" },
+      { name: "SwissKrono 18 PŁYTA DĄB TRAVIAT 3311 SD", folder: "SwissKrono", file: "18-plyta-dab-traviat-3311-sd-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA DĄB WARSZAWA (TOSCA) 3312 SD", folder: "SwissKrono", file: "18-plyta-dab-tosca-3312-sd-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA DĄB NABUCCO 3313 SD", folder: "SwissKrono", file: "18-plyta-dab-nabucco-3313-sd-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA DĄB GIOVANNI 3314 SD", folder: "SwissKrono", file: "18-plyta-dab-giovan-3314-sd-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA DĄB FIGARO 3315 SD", folder: "SwissKrono", file: "18-plyta-dab-figaro-3315-sd-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA DĄB CARMEN 3316 SD", folder: "SwissKrono", file: "18-plyta-dab-carmen-3316-sd-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA DĄB SAN MARINO 3349 MX", folder: "SwissKrono", file: "18-plyta-dab-san-mar-3349-mx-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA DĄB ANCONA 3276 MX", folder: "SwissKrono", file: "18-plyta-dab-ancona-3276-mx-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA DĄB CORTONA 3275 MX", folder: "SwissKrono", file: "18-plyta-dab-cortona-3275-mx-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA BETON 3274 BS", folder: "SwissKrono", file: "18-plyta-beton-3274-bs-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA ENIGMA 3269 SM", folder: "SwissKrono", file: "18-plyta-enigma-3269-sm-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA P JAŚMIN 3266 PE", folder: "SwissKrono", file: "18-plyta-p-jasmin-3266-pe-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA BETON CIEMNY 3265 BS", folder: "SwissKrono", file: "18-plyta-beton-ciem-3265-bs-280x207.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D3166 MX dąb rijeka jasny", folder: "SwissKrono", file: "plyta-laminowana-d3166-mx-dab-rijeka-jasny.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA BIAŁA ALASKA U8681 SM", folder: "SwissKrono", file: "plyta-laminowana-8681-sm-bialy-alaska.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA DĄB SONOMA TABAC 5194 MX", folder: "SwissKrono", file: "18-plyta-dab-son-tab-5194-mx-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA SOSNA BIELONA 3168 MX", folder: "SwissKrono", file: "18-plyta-sosna-bielona-3168-mx-280x207.jpg" },
+      { name: "SwissKrono 18 SF PŁYTA P CZARNA PE 190 PE", folder: "SwissKrono", file: "18-sf-plyta-p-czarna-pe-190-pe-280x207.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA U3114 PE grafit", folder: "SwissKrono", file: "plyta-laminowana-u3114-pe-grafit.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA CAPPUCCINO 3053 PE", folder: "SwissKrono", file: "18-plyta-p-cappuccino-3053-pe-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA BIAŁY ALASKA 8681 SM", folder: "SwissKrono", file: "18-plyta-bialy-alaska-8681-sm-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA BIAŁA U511 SM", folder: "SwissKrono", file: "plyta-laminowana-u511-sm-bialy-korpus.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D9118 SE dąb windsor jasny", folder: "SwissKrono", file: "plyta-laminowana-d9118-se-dab-windsor-jasny.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA U 1301 PE wanilia", folder: "SwissKrono", file: "plyta-laminowana-u1301-pe-wanilia.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA ORZECH CALIFORNIA 2713 BS", folder: "SwissKrono", file: "18-plyta-orzech-cal-2713-bs-280x207.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D9311 SM olcha górska", folder: "SwissKrono", file: "plyta-laminowana-d9311-sm-olcha-gorska.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA BIAŁY K101 SE", folder: "SwissKrono", file: "plyta-laminowana-k101-se-bialy.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D881 PE metalik", folder: "SwissKrono", file: "plyta-laminowana-d881-pe-metalik.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D2226 BS wenge magia", folder: "SwissKrono", file: "plyta-laminowana-d2226-bs-wenge-magia.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA K101 SM biały", folder: "SwissKrono", file: "plyta-laminowana-k101-sm-bialy.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D1972 SE jabłoń locarno", folder: "SwissKrono", file: "plyta-laminowana-d1972-se-jablon-locarno.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D9310 SE olcha", folder: "SwissKrono", file: "plyta-laminowana-d9310-se-olcha.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D375 SE klon naturalny", folder: "SwissKrono", file: "plyta-laminowana-d375-se-klon-naturalny.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D440 SE klon vancouver jasny", folder: "SwissKrono", file: "plyta-laminowana-d440-se-klon-vancouver-jasny.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D381 SE buk jasny", folder: "SwissKrono", file: "plyta-laminowana-d381-se-buk-jasny.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D9300 PE grusza polna", folder: "SwissKrono", file: "plyta-laminowana-d9300-pe-grusza-polna.jpg" },
+      { name: "SwissKrono PŁYTA LAMINOWANA D9164 BS orzech caravaggio", folder: "SwissKrono", file: "plyta-laminowana-d9164-bs-orzech-caravaggio.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA ORZECH ECCO 9163 BS", folder: "SwissKrono", file: "18-plyta-orzech-eco-9163-bs-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA BIAŁA 101 PE", folder: "SwissKrono", file: "18-plyta-p-biala-101-pe-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA ORZECH JASNY 722 SE", folder: "SwissKrono", file: "18-plyta-orzech-jasny-722-se-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA JABŁOŃ LOCARNO 1972 SE", folder: "SwissKrono", file: "18-plyta-jab-locarn-1972-se-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA CZARNA SE 190 SE", folder: "SwissKrono", file: "18-plyta-czarna-se-190-se-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA ŻÓŁTY DIJON 4438 VL", folder: "SwissKrono", file: "18-plyta-n-zolty-dijon-4438-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA CZERWONE WINO 4437 VL", folder: "SwissKrono", file: "18-plyta-n-czerw-wino-4437-vl-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW AKACJA KSIĘŻYCA 1861 MX", folder: "SwissKrono", file: "18-plyta-ow-akacja-ksiezyc-1861-mx-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA OW MIEDZ ZMIERZCH 1032 BS", folder: "SwissKrono", file: "18-plyta-ow-miedz-zmierzch-1032-bs-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA WIĄZ MODERATO 3193 SW", folder: "SwissKrono", file: "18-plyta-wiaz-moderato-3193-sw-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA WIĄZ ADAGIO 3191 SW", folder: "SwissKrono", file: "18-plyta-wiaz-adagio-3191-sw-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA WIĄZ VIVO 3195 SW", folder: "SwissKrono", file: "18-plyta-wiaz-vivo-3195-sw-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA WIĄZ ALLEGRO 3194 SW", folder: "SwissKrono", file: "18-plyta-wiaz-allegro-3194-sw-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA WIĄZ PRESTO 3196 SW", folder: "SwissKrono", file: "18-plyta-wiaz-presto-3196-sw-280x207.jpg" },
+      { name: "SwissKrono 18 PŁYTA LAMINOWANA DĄB PALERMO CIEMNY 2610 MX", folder: "SwissKrono", file: "18-plyta-dab-pal-ciem-2610-mx-280x207.jpg" },
+        
+          // WOODECO
+      { name: "Woodeco Biały PB0010", folder: "Woodeco", file: "PB0010-Bialy-4.jpg" },
+      { name: "Woodeco Biel Uniwersalna PB0011", folder: "Woodeco", file: "PB0011-Biel-Uniwersalna.jpg" },
+      { name: "Woodeco Biel Perłowa PB0050", folder: "Woodeco", file: "PB0050-Biel-Per-owa.jpg" },
+      { name: "Woodeco Biały Jedwab PB0080", folder: "Woodeco", file: "PB0080-Biel-Szlachetna5.jpg" },
+      { name: "Woodeco Śnieżna Biel PB0090", folder: "Woodeco", file: "PB0090-nie-na-Biel.jpg" },
+      { name: "Woodeco Biel Kredowa PB0100", folder: "Woodeco", file: "PB0100-Biel-Kredowa.jpg" },
+      { name: "Woodeco Biel Górska PB0110", folder: "Woodeco", file: "PB0110-Biel-Alpejska-4.jpg" },
+      { name: "Woodeco Dąb Sonoma PD3000", folder: "Woodeco", file: "PD3000-D-b-Sonoma.jpg" },
+      { name: "Woodeco Dąb Tajga PD3001", folder: "Woodeco", file: "PD3001-D-b-Tajga.jpg" },
+      { name: "Woodeco Dąb Górski Szary PD3004", folder: "Woodeco", file: "PD3004-D-b-G-rski-Szary.jpg" },
+      { name: "Woodeco Dąb Amerykański PD3012", folder: "Woodeco", file: "PD3012-D-b-Ameryka-ski.jpg" },
+      { name: "Woodeco Dąb Artisan PD3016", folder: "Woodeco", file: "PD3016-D-b-Artisan.jpg" },
+      { name: "Woodeco Dąb Lefkas Ciemny PD3017", folder: "Woodeco", file: "PD3017-Dab-Lefkas-Ciemny-5.jpg" },
+      { name: "Woodeco Dąb Lindberg PD3018", folder: "Woodeco", file: "PD3018-D-b-Lindberg.jpg" },
+      { name: "Woodeco Dąb Bordeaux Jasny PD3019", folder: "Woodeco", file: "PD3019.jpg" },
+      { name: "Woodeco Dąb Srebrzysty PD3022", folder: "Woodeco", file: "PD3022.jpg" },
+      { name: "Woodeco Dąb Lancelot PD3023", folder: "Woodeco", file: "PD3023-D-b-Lancelot.jpg" },
+      { name: "Woodeco Dąb Rzeczny PD3025", folder: "Woodeco", file: "PD3025-Dab-Riva-4.jpg" },
+      { name: "Woodeco Dąb Elegancki PD3030", folder: "Woodeco", file: "PD3030-D-b-Elegancki.jpg" },
+      { name: "Woodeco Dąb Wotan PD3033", folder: "Woodeco", file: "PD3033-D-b-Wotan.jpg" },
+      { name: "Woodeco Dąb Luciano PD3036", folder: "Woodeco", file: "PD3036-D-b-Luciano.jpg" },
+      { name: "Woodeco Dąb Olejowany PD3037", folder: "Woodeco", file: "PD3037-D-b-Olejowany.jpg" },
+      { name: "Woodeco Dąb Wilton Biały PD3049", folder: "Woodeco", file: "PD3049-Wilton-Oak-Bialy-4.jpg" },
+      { name: "Woodeco Dąb Grand Naturalny PD3051", folder: "Woodeco", file: "PD3051-D-b-Grand-Naturalny.jpg" },
+      { name: "Woodeco Dąb Grand ciemny PD3052", folder: "Woodeco", file: "PD3052-Dab-Grand-Ciemny-4.jpg" },
+      { name: "Woodeco Dąb Karmel PD3053", folder: "Woodeco", file: "PD3053-D-b-Karmel.jpg" },
+      { name: "Woodeco Dąb Carbon PD3054", folder: "Woodeco", file: "PD3054-Dab-Carbon-6.jpg" },
+      { name: "Woodeco Dąb Estana Jasny PD3055", folder: "Woodeco", file: "PD3055-D-b-Estana-Jasny.jpg" },
+      { name: "Woodeco Dąb Estana Ciemny PD3056", folder: "Woodeco", file: "PD3056-D-b-Estana-Ciemny.jpg" },
+      { name: "Woodeco Dąb Viking PD3071", folder: "Woodeco", file: "PD3071-D-b-Viking.jpg" },
+      { name: "Woodeco Dąb Noble PD3074", folder: "Woodeco", file: "PD3074-D-b-Noble.jpg" },
+      { name: "Woodeco Dąb Nostalgia PD3075", folder: "Woodeco", file: "PD3075-D-b-Nostalgia.jpg" },
+      { name: "Woodeco Dąb Balance PD3076", folder: "Woodeco", file: "PD3076-D-b-Balance.jpg" },
+      { name: "Woodeco Dąb Scandi PD3077", folder: "Woodeco", file: "PD3077-D-b-Scandi.jpg" },
+      { name: "Woodeco Dąb Linea PD3079", folder: "Woodeco", file: "PD3079-D-b-Linea.jpg" },
+      { name: "Woodeco Dąb Perłowy PD3081", folder: "Woodeco", file: "PD3081-D-b-Per-owy.jpg" },
+      { name: "Woodeco Dąb Stylowy PD3082", folder: "Woodeco", file: "PD3082-D-b-Stylowy.jpg" },
+      { name: "Woodeco Imagine Oak PD3083", folder: "Woodeco", file: "PD3083-Imagine-Oak.jpg" },
+      { name: "Woodeco Dąb Natura PD3084", folder: "Woodeco", file: "PD3084-D-b-Natura.jpg" },
+      { name: "Woodeco Dąb Gaja PD3089", folder: "Woodeco", file: "PD3089-D-b-Gaja.jpg" },
+      { name: "Woodeco Dąb Trufel miodowy PD3091", folder: "Woodeco", file: "PD3091-D-b-Trufel-miodowy.jpg" },
+      { name: "Woodeco Dąb Terra naturalny PD3092", folder: "Woodeco", file: "PD3092-D-b-Terra-naturalny.jpg" },
+      { name: "Woodeco Dąb Windmill Gold PD3094", folder: "Woodeco", file: "PD3094-D-b-Windmill-Gold.jpg" },
+      { name: "Woodeco Dąb Windmill Dark PD3095", folder: "Woodeco", file: "PD3095-D-b-Windmill-Dark.jpg" },
+      { name: "Woodeco Dąb Windmill Pale PD3096", folder: "Woodeco", file: "PD3096-D-b-Windmill-Pale.jpg" },
+      { name: "Woodeco Dąb Lumberjack Smoke PD3097", folder: "Woodeco", file: "PD3097-D-b-Lumberjack-Smoke.jpg" },
+      { name: "Woodeco Dąb Lumberjack Sand PD3098", folder: "Woodeco", file: "PD3098-D-b-Lumberjack-Sand.jpg" },
+      { name: "Woodeco Dąb Lumberjack Frost PD3099", folder: "Woodeco", file: "PD3099-D-b-Lumberjack-Frost.jpg" },
+      { name: "Woodeco Dąb Carpenter Coffe PD3100", folder: "Woodeco", file: "PD3100-D-b-Carpenter-Coffee.jpg" },
+      { name: "Woodeco Dąb Carpenter Whisky PD3101", folder: "Woodeco", file: "PD3101-D-b-Carpenter-Whisky.jpg" },
+      { name: "Woodeco Dąb Baltic Dune PD3102", folder: "Woodeco", file: "PD3102-D-b-Baltic-Dune.jpg" },
+      { name: "Woodeco Dąb Baltic Ice PD3103", folder: "Woodeco", file: "PD3103-D-b-Baltic-Ice.jpg" },
+      { name: "Woodeco Dąb Baltic Storm PD3104", folder: "Woodeco", file: "PD3104-D-b-Baltic-Storm.jpg" },
+      { name: "Woodeco Dąb Viking Ciepły PD3111", folder: "Woodeco", file: "PD3111-D-b-Viking-Ciep-y.jpg" },
+      { name: "Woodeco Dąb Dunin PD3114", folder: "Woodeco", file: "PD3114-D-b-Dunin.jpg" },
+      { name: "Woodeco Dąb Sękaty PD3115", folder: "Woodeco", file: "PD3115-D-b-S-katy.jpg" },
+      { name: "Woodeco Dąb Gentelmen PD3116", folder: "Woodeco", file: "PD3116-D-b-Gentelmen.jpg" },
+      { name: "Woodeco Dąb Millenium PD3117", folder: "Woodeco", file: "PD3117-D-b-Millenium.jpg" },
+      { name: "Woodeco Dąb Millenium Szary PD3118", folder: "Woodeco", file: "PD3118-D-b-Millenium-Szary-1.jpg" },
+      { name: "Woodeco Dąb Baltic Szary PD3119", folder: "Woodeco", file: "PD3119-D-b-Baltic-Szary.jpg" },
+      { name: "Woodeco Dąb Surowy PD3120", folder: "Woodeco", file: "PD3120-D-b-Surowy.jpg" },
+      { name: "Woodeco Dąb Carpenter jasny PD3121", folder: "Woodeco", file: "PD3121-D-b-Carpenter-jasny.jpg" },
+      { name: "Woodeco Dąb Klasyczny PD3122", folder: "Woodeco", file: "PD3122-D-b-Klasyczny.jpg" },
+      { name: "Woodeco Dąb Windmill Miodowy PD3123", folder: "Woodeco", file: "PD3123-D-b-Windmill-Miodowy.jpg" },
+      { name: "Woodeco Dąb Naturalny PD3124", folder: "Woodeco", file: "PD3124-D-b-Naturalny.jpg" },
+      { name: "Woodeco Dąb Kopenhaga PD3128", folder: "Woodeco", file: "PD3128-D-b-Kopenhaga.jpg" },
+      { name: "Woodeco Orzech California PD5000", folder: "Woodeco", file: "PD5000-Orzech-California.jpg" },
+      { name: "Woodeco Orzech Elegant PD5008", folder: "Woodeco", file: "PD5008-Orzech-Elegant.jpg" },
+      { name: "Woodeco Orzech Włoski PD5010", folder: "Woodeco", file: "PD5010-Orzech-W-oski.jpg" },
+      { name: "Woodeco Orzech Wisconsin PD5011", folder: "Woodeco", file: "PD5011-Orzech-Wisconsin-4.jpg" },
+      { name: "Woodeco Orzech Villa PD5014", folder: "Woodeco", file: "PD5014-Orzech-Villa.jpg" },
+      { name: "Woodeco Orzech Royal PD5015", folder: "Woodeco", file: "PD5015-Orzech-Royal.jpg" },
+      { name: "Woodeco Jesion Prestige Brąz PD6001", folder: "Woodeco", file: "PD6001-Jesion-Prestige-Br-z.jpg" },
+      { name: "Woodeco Jesion Prestige Czarny PD6002", folder: "Woodeco", file: "PD6002-Jesion-Prestige-Czarny.jpg" },
+      { name: "Woodeco Jesion Prestige Jasny PD6003", folder: "Woodeco", file: "PD6003-Jesion-Prestige-Jasny.jpg" },
+      { name: "Woodeco Jesion Nordycki PD6006", folder: "Woodeco", file: "PD6006-Jesion-Nordycki.jpg" },
+      { name: "Woodeco Jesion Prestige PD6007", folder: "Woodeco", file: "PD6007-Jesion-Prestige.jpg" },
+      { name: "Woodeco Buk Norweski PD7000", folder: "Woodeco", file: "PD7000-Buk-Norweski.jpg" },
+      { name: "Woodeco Akacja PD7001", folder: "Woodeco", file: "PD7001-Akacja.jpg" },
+      { name: "Woodeco Buk Scandi PD7003", folder: "Woodeco", file: "PD7003-big.jpg" },
+      { name: "Woodeco Teak Bielony PD7042", folder: "Woodeco", file: "PD7042-Nordic-Teak4.jpg" },
+      { name: "Woodeco Sosna Andersen PD7049", folder: "Woodeco", file: "PD7049-Sosna-Andresen-4.jpg" },
+      { name: "Woodeco Sosna Bielona PD7051", folder: "Woodeco", file: "PD7051-Sosna-Fano-Biala-4.jpg" },
+      { name: "Woodeco Teak Szlachetny PD7056", folder: "Woodeco", file: "PD7056-Teak-Szlachetny.jpg" },
+      { name: "Woodeco Wiąz Baron PD7061", folder: "Woodeco", file: "PD7061-Wiaz-Baron-4.jpg" },
+      { name: "Woodeco Wenge Platynowe PD7064", folder: "Woodeco", file: "PD7064-Wenge-Srebrne-4.jpg" },
+      { name: "Woodeco Sosna Słowiańska PD7066", folder: "Woodeco", file: "PD7066-Sosna-Slowianska-5.jpg" },
+      { name: "Woodeco Jodełka Scandi PD7085", folder: "Woodeco", file: "PD7085-Jode-ka-Scandi.jpg" },
+      { name: "Woodeco Art Deco PD7088", folder: "Woodeco", file: "PD7088-Art-Deco.jpg" },
+      { name: "Woodeco Czereśnia Sakura PD7089", folder: "Woodeco", file: "PD7089-Czere-nia-Sakura.jpg" },
+      { name: "Woodeco Sklejka Brzozowa PD7090", folder: "Woodeco", file: "PD7090-Sklejka-Brzozowa.jpg" },
+      { name: "Woodeco Klon Prosna PD7091", folder: "Woodeco", file: "PD7091-Klon-Prosna.jpg" },
+      { name: "Woodeco Akacja Świetlista PD7092", folder: "Woodeco", file: "PD7092-Akacja-wietlista.jpg" },
+      { name: "Woodeco Czereśnia Górska PD7093", folder: "Woodeco", file: "PD7093-Czere-nia-G-rska.jpg" },
+      { name: "Woodeco Wiąz T PD7094", folder: "Woodeco", file: "PD7094-Wi-z-T.jpg" },
+      { name: "Woodeco Wiąz Naturalny PD7095", folder: "Woodeco", file: "PD7095-Wi-z-Naturalny.jpg" },
+      { name: "Woodeco Wiąz Sigma PD7096", folder: "Woodeco", file: "PD7096-Wi-z-Sigma.jpg" },
+      { name: "Woodeco Inox PF8009", folder: "Woodeco", file: "PF8009-Inox.jpg" },
+      { name: "Woodeco Matera PF8010", folder: "Woodeco", file: "PF8010-5.jpg" },
+      { name: "Woodeco Rdzawa Stal PF8012", folder: "Woodeco", file: "PF8012-Stal-Hartowana-4.jpg" },
+      { name: "Woodeco Stal Premium PF8025", folder: "Woodeco", file: "PF8025-Stal-Premium.jpg" },
+      { name: "Woodeco Dark Canvas PF8026", folder: "Woodeco", file: "PF8026-Dark-Canvas.jpg" },
+      { name: "Woodeco Raya PF8028", folder: "Woodeco", file: "PF8028-Raya.jpg" },
+      { name: "Woodeco Inox Brąz PF8029", folder: "Woodeco", file: "PF8029-Inox-Br-z.jpg" },
+      { name: "Woodeco Inox Beż PF8030", folder: "Woodeco", file: "PF8030-Inox-Be-.jpg" },
+      { name: "Woodeco Inox Szampan PF8031", folder: "Woodeco", file: "PF8031-Inox-Szampan.jpg" },
+      { name: "Woodeco Inox Miedź PF8032", folder: "Woodeco", file: "PF8032-Inox-Mied-.jpg" },
+      { name: "Woodeco Rytm PF8034", folder: "Woodeco", file: "PF8034-Rytm.jpg" },
+      { name: "Woodeco Splot PF8042", folder: "Woodeco", file: "PF8042-PU-Splot.jpg" },
+      { name: "Woodeco Marmur Bianco PK9014", folder: "Woodeco", file: "PK9014-Marmur-Bianco.jpg" },
+      { name: "Woodeco Marmur Black Royal PK9015", folder: "Woodeco", file: "PK9015-Marmur-Black-Royal.jpg" },
+      { name: "Woodeco Piccolo Granito PK9031", folder: "Woodeco", file: "PK9031-Piccolo-Granito-4-new.jpg" },
+      { name: "Woodeco Light Concrete PK9032", folder: "Woodeco", file: "PK9032-Light-Concrete.jpg" },
+      { name: "Woodeco San Sebastian PK9033", folder: "Woodeco", file: "PK9033-San-Sebastian.jpg" },
+      { name: "Woodeco Metropolis PK9050", folder: "Woodeco", file: "PK9050-Metropolis.jpg" },
+      { name: "Woodeco Dąb Florale Lakierowany PS3135", folder: "Woodeco", file: "PS3135-SW-D-b-Florale-lakierowany.jpg" },
+      { name: "Woodeco Dąb Florale Olejowany PS3136", folder: "Woodeco", file: "PS3136-SW-D-b-Florale-olejowany.jpg" },
+      { name: "Woodeco Dąb Florale Amber PS3137", folder: "Woodeco", file: "PS3137-SW-D-b-Florale-Amber.jpg" },
+      { name: "Woodeco Dąb Florale Biscotto PS3138", folder: "Woodeco", file: "PS3138-SW-D-b-Florale-Biscotto.jpg" },
+      { name: "Woodeco Dąb Ambiente Lakierowany PS3139", folder: "Woodeco", file: "PS3139-BW-D-b-Ambiente-lakierowany.jpg" },
+      { name: "Woodeco Dąb Ambiente Olejowany PS3140", folder: "Woodeco", file: "PS3140-BW-D-b-Ambiente-olejowany.jpg" },
+      { name: "Woodeco Dąb Ambiente Toffi PS3141", folder: "Woodeco", file: "PS3141-BW-D-b-Ambiente-Toffi.jpg" },
+      { name: "Woodeco Dąb Ambiente Terra PS3142", folder: "Woodeco", file: "PS3142-BW-D-b-Ambiente-Terra.jpg" },
+      { name: "Woodeco Dąb Ambiente Noce PS3143", folder: "Woodeco", file: "PS3143-BW-D-b-Ambiente-Noce.jpg" },
+      { name: "Woodeco Dąb Fierra Lakierowany PS3145", folder: "Woodeco", file: "PS3145-FW-Da-b-Fierra-lakierowany.jpg" },
+      { name: "Woodeco Dąb Fierra Olejowany PS3146", folder: "Woodeco", file: "PS3146-FW-Da-b-Fierra-olejowany.jpg" },
+      { name: "Woodeco Dąb Fierra Piaskowy PS3147", folder: "Woodeco", file: "PS3147-FW-Da-b-Fierra-Piaskowy.jpg" },
+      { name: "Woodeco Dąb Fierra Taupe PS3148", folder: "Woodeco", file: "PS3148-FW-Da-b-Fierra-Taupe.jpg" },
+      { name: "Woodeco Dąb Fierra Cynamon PS3149", folder: "Woodeco", file: "PS3149-FW-Da-b-Fierra-Cynamon.jpg" },
+      { name: "Woodeco Dąb Fierra Mokko PS3150", folder: "Woodeco", file: "PS3150-FW-Da-b-Fierra-Mokko.jpg" },
+      { name: "Woodeco Czarny Onyx PU1001", folder: "Woodeco", file: "PU1001-Czarny-Onyx.jpg" },
+      { name: "Woodeco Tobacco PU1200", folder: "Woodeco", file: "PU1200-Tobacco.jpg" },
+      { name: "Woodeco BAZALT PU1201", folder: "Woodeco", file: "PU1201-Bazalt-5.jpg" },
+      { name: "Woodeco Antracyt PU1203", folder: "Woodeco", file: "PU1203-Antracyt.jpg" },
+      { name: "Woodeco Szary New York PU1206", folder: "Woodeco", file: "PU1206-Szary-New-York.jpg" },
+      { name: "Woodeco Szary Gołębi PU1207", folder: "Woodeco", file: "PU1207-Szary-Go-bi.jpg" },
+      { name: "Woodeco Szary PU1210", folder: "Woodeco", file: "PU1210-Szary.jpg" },
+      { name: "Woodeco Grafit PU1211", folder: "Woodeco", file: "PU1211-Grafit.jpg" },
+      { name: "Woodeco Szary Pallad PU1213", folder: "Woodeco", file: "PU1213-Szary-Pallad.jpg" },
+      { name: "Woodeco Ciemny Szary PU1215", folder: "Woodeco", file: "PU1215-Szary-Skalny-4.jpg" },
+      { name: "Woodeco Szary Neutralny PU1220", folder: "Woodeco", file: "PU1220-Szary-Neutralny.jpg" },
+      { name: "Woodeco Sepia PU1500", folder: "Woodeco", file: "PU1500-Sepia.jpg" },
+      { name: "Woodeco Beż PU1502", folder: "Woodeco", file: "PU1502-Be-.jpg" },
+      { name: "Woodeco Piasek Pustyni PU1503", folder: "Woodeco", file: "PU1503-Piasek-Pustyni.jpg" },
+      { name: "Woodeco Kalahari PU1504", folder: "Woodeco", file: "PU1504-Kalahari.jpg" },
+      { name: "Woodeco Kaszmirowy Beż PU1506", folder: "Woodeco", file: "PU1506-Kaszmirowy-Be-.jpg" },
+      { name: "Woodeco Kość Słoniowa PU1507", folder: "Woodeco", file: "PU1507-Ko-S-oniowa.jpg" },
+      { name: "Woodeco Taupe PU1510", folder: "Woodeco", file: "PU1510-Taupe.jpg" },
+      { name: "Woodeco Beż Jasny PU1513", folder: "Woodeco", file: "PU1513-Be-Jasny.jpg" },
+      { name: "Woodeco Ciemny Beż PU1514", folder: "Woodeco", file: "PU1514-Ciemny-Be-.jpg" },
+      { name: "Woodeco Kakao PU1515", folder: "Woodeco", file: "PU1515-Kakao.jpg" },
+      { name: "Woodeco Terracota PU1516", folder: "Woodeco", file: "PU1516-Terracota.jpg" },
+      { name: "Woodeco Wanilia PU1517", folder: "Woodeco", file: "PU1517-Wanilia.jpg" },
+      { name: "Woodeco Ochra PU1802", folder: "Woodeco", file: "PU1802-Ochra.jpg" },
+      { name: "Woodeco Błękit Ciemny PU2001", folder: "Woodeco", file: "PU2001-B-kit-Ciemny.jpg" },
+      { name: "Woodeco Zieleń Szałwi PU2204", folder: "Woodeco", file: "PU2204-Ziele-Sza-wi.jpg" },
+      { name: "Woodeco Błękit Nieba PU2007", folder: "Woodeco", file: "PU2007-Niebieski-Wodny-4.jpg" },
+      { name: "Woodeco Błękit Północny PU2008", folder: "Woodeco", file: "PU2008-B-kit-P-nocy.jpg" },
+      { name: "Woodeco Niebieski Kredowy PU2009", folder: "Woodeco", file: "PU2009-Niebieski-Kredowy.jpg" },
+      { name: "Woodeco Kobalt PU2010", folder: "Woodeco", file: "PU2010-Kobalt.jpg" },
+      { name: "Woodeco Zieleń Butelkowa PU2206", folder: "Woodeco", file: "PU2206-Ziele-Butelkowa.jpg" },
+      { name: "Woodeco Eukaliptus PU2207", folder: "Woodeco", file: "PU2207-Eukaliptus.jpg" },
+      { name: "Woodeco Zielony Oliwkowy PU2209", folder: "Woodeco", file: "PU2209-Zielony-Oliwkowy.jpg" },
+      { name: "Woodeco Zielony Wojskowy PU2210", folder: "Woodeco", file: "PU2210-Zielony-Wojskowy.jpg" },
+      { name: "Woodeco Koral PU2401", folder: "Woodeco", file: "PU2401-Koral.jpg" },
+      { name: "Woodeco Ceglany PU2402", folder: "Woodeco", file: "PU2402-Ceglany.jpg" },
+      { name: "Woodeco Millennial pink PU2604", folder: "Woodeco", file: "PU2604-Millennial-Pink.jpg" },
+      
+        
+    ];
+
+   const grid = document.getElementById('boardsGrid');
+    const searchInput = document.getElementById('searchInput');
+    const clearInputBtn = document.getElementById('clearInput');
+    const counter = document.getElementById('counter');
+
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImg');
+    const modalTitle = document.getElementById('modalTitle');
+    const closeModal = document.getElementById('closeModal');
+
+    const placeholderImg = 'https://via.placeholder.com/300x200?text=Brak+obrazu';
+
+    function getImagePath(board) {
+      return board.file ? `img/${board.folder}/${board.file}` : placeholderImg;
+    }
+
+    function displayBoards(items) {
+      grid.innerHTML = '';
+      
+      if (items.length === 0) {
+        const noRes = document.createElement('div');
+        noRes.className = 'no-results';
+        noRes.textContent = 'Brak wyników spełniających kryteria wyszukiwania.';
+        grid.appendChild(noRes);
+        counter.textContent = 'Znaleziono: 0';
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+
+      items.forEach(board => {
+        const imgPath = getImagePath(board);
+        
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const imgWrapper = document.createElement('div');
+        imgWrapper.className = 'img-wrapper';
+
+        const img = document.createElement('img');
+        img.src = imgPath;
+        img.alt = board.name;
+        img.loading = 'lazy';
+        img.onerror = () => { img.src = placeholderImg; };
+
+        imgWrapper.appendChild(img);
+
+        const cardContent = document.createElement('div');
+        cardContent.className = 'card-content';
+
+        const cardTitle = document.createElement('div');
+        cardTitle.className = 'card-title';
+        cardTitle.textContent = board.name;
+
+        cardContent.appendChild(cardTitle);
+        card.appendChild(imgWrapper);
+        card.appendChild(cardContent);
+
+        card.addEventListener('click', () => {
+          modalImg.src = imgPath;
+          modalTitle.textContent = board.name;
+          modal.classList.add('active');
+        });
+
+        fragment.appendChild(card);
+      });
+
+      grid.appendChild(fragment);
+      counter.textContent = `Wyświetlono: ${items.length} z ${boards.length}`;
+    }
+
+   // Funkcja usuwająca polskie znaki oraz ujednolicająca nazwy (np. Viking/Wiking)
+    function removeAccents(text) {
+      let cleaned = text
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/ł/g, 'l')
+        .replace(/Ł/g, 'L')
+        .toLowerCase();
+
+      // Zamienniki nazw i przedrostków (angielskie <-> polskie)
+      cleaned = cleaned
+        .replace(/viking/g, 'wiking')
+        .replace(/york/g, 'jork')
+        .replace(/cashmir/g, 'kaszmir')
+        .replace(/cremona/g, 'kremona')
+        .replace(/craft/g, 'kraft')
+        .replace(/venge/g, 'wenge');
+
+      return cleaned;
+    }
+
+    // Debounce do filtrowania
+    let debounceTimer;
+    function filterBoards(query) {
+      const cleanQuery = removeAccents(query.trim());
+      clearInputBtn.style.display = cleanQuery ? 'block' : 'none';
+
+      const filtered = boards.filter(board => {
+        const cleanName = removeAccents(board.name);
+        return cleanName.includes(cleanQuery);
+      });
+      
+      displayBoards(filtered);
+    }
+
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => filterBoards(e.target.value), 150);
+    });
+
+    clearInputBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      filterBoards('');
+      searchInput.focus();
+    });
+
+    // Filtrowanie z tagów
+    document.querySelectorAll('.tag').forEach(tag => {
+      tag.addEventListener('click', () => {
+        const value = tag.getAttribute('data-filter');
+        searchInput.value = value;
+        filterBoards(value);
+      });
+    });
+
+    // Zamykanie modala
+    closeModal.addEventListener('click', () => modal.classList.remove('active'));
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('active')) {
+        modal.classList.remove('active');
+      }
+    });
+
+    // Start aplikacji
+    displayBoards(boards);
+  </script>
+
+</body>
+</html>
